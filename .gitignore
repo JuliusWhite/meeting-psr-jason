@@ -1,0 +1,13 @@
+# Archivos compilados de Java/Jason
+bin/
+classes/
+*.class
+
+# Archivos de configuración de IDEs (Eclipse, VSCode)
+.settings/
+.classpath
+.project
+.vscode/
+
+# Logs
+*.log
