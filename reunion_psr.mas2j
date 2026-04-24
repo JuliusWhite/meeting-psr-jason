@@ -15,13 +15,11 @@ MAS reunion_psr {
     infrastructure: Centralised
 
     agents:
-        // El organizador que gestiona el proceso de búsqueda
         organizador;
 
-        // Los tres participantes con sus respectivas agendas
-        agente1 participante; 
-        agente2 participante;
-        agente3 participante;
+        agente1 participante [beliefs="ocupado(10), ocupado(11)"];
+        agente2 participante [beliefs="ocupado(12), ocupado(13)"];
+        agente3 participante [beliefs="ocupado(10), ocupado(15)"];
 
     aslSourcePath: "src/agt";
     

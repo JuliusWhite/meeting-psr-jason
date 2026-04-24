@@ -1,15 +1,3 @@
-/* Agendas locales */
-ocupado(10) :- .my_name(agente1).
-ocupado(11) :- .my_name(agente1).
-
-ocupado(12) :- .my_name(agente2).
-ocupado(13) :- .my_name(agente2).
-
-ocupado(10) :- .my_name(agente3).
-ocupado(15) :- .my_name(agente3).
-
-
-/* Planes */
 
 // Reacción si reciben una propuesta y la hora coincide con su regla de "ocupado"
 +propuesta(H) : ocupado(H) <-
