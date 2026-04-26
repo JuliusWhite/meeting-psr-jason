@@ -1,45 +1,106 @@
 /* Creencias iniciales */
-horas_posibles([10, 11, 12, 13, 14, 15]).
 total_participantes(3).
 
 /* Metas iniciales */
-!iniciar_psr.
+!iniciar_convocatoria.
 
 /* Planes */
 
-+!iniciar_psr : horas_posibles(L) <-
-    .print("--- INICIANDO ALGORITMO VUELTA ATRÁS ---");
-    !ejecutar_backtracking(L).
+/*_______________________________Planes de Inicialización y Validación rango_reunion_______________________________*/
 
-// Intenta asignar un valor (Hora) del dominio
-+!ejecutar_backtracking([Hora|Resto]) <-
-    .print("Asignando variable Hora = ", Hora, ":00h...");
-    .abolish(voto(Hora, _)); 
-    -+intento_actual(Hora);
-    .broadcast(tell, propuesta(Hora));
+// La creencia existe y es válida
++!iniciar_convocatoria : rango_reunion(Min, Max) & Min >= 0 & Min < Max <-
+    // Guardamos las cotas
+    -+cota_inferior_global(Min);
+    -+cota_superior_global(Max);
     
-    // Esperamos un momento a que todos voten (mecanismo de sincronización robusto)
-    .wait(1000); 
-    !verificar_consistencia(Hora, Resto).
+    .print("-> ORGANIZANDO REUNION. Por favor, dadme vuestras cotas superiores y inferiores de horas libres respecto a este rango [", Min, " - ", Max, "]");
+    .broadcast(tell, rango_reunion(Min, Max)).
 
-// Si el dominio se agota
-+!ejecutar_backtracking([]) <- 
-    .print("FALLO: No existe ninguna asignación consistente en el dominio.").
+// La creencia existe pero es errónea (por ejemplo: -1:00 a 0:00 o 1:00 a 23:00)
++!iniciar_convocatoria : rango_reunion(Min, Max) & (Min < 0 | Max > 23 | Min >= Max) <-
+    .print("Error en organizador: El rango de reunión proporcionado [", Min, " , ", Max, "] es inválido. Ejecución detenida.").
 
-// Comprobación de Consistencia (Paso clave del PSR)
-+!verificar_consistencia(H, Resto) <-
+// La creencia no existe
++!iniciar_convocatoria : not rango_reunion(_, _) <-
+    .print("Error en organizador: No se encontró la creencia 'rango_reunion' en el mas2j. Ejecución detenida.").
+
+
+/*_____________________________________________PSR_____________________________________________*/
+
++cotas_PSR(CotaMin, CotaMax)[source(Ag)] <-
+    +voto_recibido(Ag);
+    
+    // Ajusta la cota inferior si un agente está libre más tarde que los demás (CONSISTENCIA DE COTAS)
+    ?cota_inferior_global(ActualMin);
+    if (CotaMin > ActualMin) { -+cota_inferior_global(CotaMin); };
+
+    // Ajusta la cota superior si el agente está libre más temprano y después ya no
+    ?cota_superior_global(ActualMax);
+    if (CotaMax < ActualMax) { -+cota_superior_global(CotaMax); };
+
+    !verificar_inicio.
+
++!verificar_inicio : not fase_propuestas <-
+    .count(voto_recibido(_), Recibidas);
     ?total_participantes(Total);
     
-    // CORRECCIÓN: Usamos [source(Ag)] para contar cuántos agentes distintos enviaron el voto
-    .count(voto(H, acepto)[source(Ag)], Aceptados);
-    
-    // Opcional: imprimir el recuento para ver lo que pasa por dentro
-    // .print("Votos a favor recibidos: ", Aceptados, " de ", Total);
+    if (Recibidas == Total) {
+        +fase_propuestas;
+
+        ?cota_inferior_global(Inicio);
+        ?cota_superior_global(Fin);
+        .print("Todas las cotas recibidas. Rango final optimizado: [", Inicio, " - ", Fin, "]");
+        !proponer_hora(Inicio);
+    }.
++!verificar_inicio.
+/* Propuesta de una hora*/
++!proponer_hora(H) : cota_superior_global(MaxG) & H > MaxG <-
+    .print("FIN: No es posible que se reunan.");
+    -fase_propuestas.
+
++!proponer_hora(H) <-
+    .print("--- Propuesta: ", H, ":00h ---");
+    .abolish(acepto(_));
+    .abolish(rechazo(_, _));
+    .broadcast(tell, propuesta(H));
+
+    .wait(1000);
+    !evaluar_respuestas(H).
+
+/* Evaluación de Respuestas a a la Propuesta*/
+
++!evaluar_respuestas(H) <-
+    ?total_participantes(Total);
+    .count(acepto(H)[source(_)], Aceptados);
     
     if (Aceptados == Total) {
-        .print("¡CONSISTENCIA ALCANZADA! Hora final: ", H, ":00h.");
-        .broadcast(tell, reunion_fijada(H))
+        .print("FIN: Ha sido posible poner una hora libre para todos. Será a las ", H, ":00. ¡Suerte en la reunión!");
+        .broadcast(tell, reunion_fijada(H));
+        -fase_propuestas;
     } else {
-        .print("Inconsistencia detectada en ", H, ":00h. Aplicando Vuelta Atrás...");
-        !ejecutar_backtracking(Resto)
+        -+salto_maximo(H);
+        
+        // Buscamos el salto más lejano iterando las creencias de rechazo
+        for ( rechazo(H, ProximaLibre) ) {
+            if (ProximaLibre == imposible) {
+                -+salto_maximo(imposible); // Si alguien dice imposible, abortamos directamente.
+            } else {
+                ?salto_maximo(Actual);
+                // Solo comparamos el salto si no estamos ya en modo cancelación (imposible)
+                if (Actual \== imposible & ProximaLibre > Actual) { 
+                    -+salto_maximo(ProximaLibre); 
+                }
+            }
+        };
+        
+        ?salto_maximo(NuevaHora);
+        
+        if (NuevaHora == imposible) { 
+            .print("FIN: No es posible que se reunan.");
+            -fase_propuestas;
+        } else {
+            .print("Saltando a las ", NuevaHora, ":00h.");
+            !proponer_hora(NuevaHora);
+        }
     }.
