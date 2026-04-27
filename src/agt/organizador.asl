@@ -80,8 +80,7 @@ total_participantes(3).
 
 /*---------------------------------------- Recepción de respuestas ------------------------------------------*/
 @recepcion_respuestas[atomic] // Si no se pone, genera condición de carrera
-+respuesta(H, _) <-
-    if (not evaluando(H)) { 
++respuesta(H, _) : not evaluando(H) <-
         ?total_participantes(Total);
         
         // Contamos todas las respuestas recibidas para la hora propuesta (H)
@@ -90,8 +89,7 @@ total_participantes(3).
         if (Recibidas == Total) {
             +evaluando(H);
             !evaluar_respuestas(H);
-        }
-    }.
+        }.
 
 /*------------------------------- Evaluación de Respuestas a a la Propuesta ---------------------------------*/
 +!evaluar_respuestas(H) <-
