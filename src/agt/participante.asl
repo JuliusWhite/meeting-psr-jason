@@ -1,4 +1,6 @@
 /* Planes */
+/* Procesamiento de horas libres de lista a creencias */
++horas_libres(Lista) <- !descomponer_lista(Lista).
 
 /*___________________________ Procesamiento de horas libres de lista a creencias ___________________________*/
 
