@@ -40,7 +40,7 @@
 
 /*__________________________ Planes de reacción a las propuestas del organizador __________________________*/
 
-+propuesta(H) : libre(H) <- .send(organizador, tell, respuesta(H, H)).
++propuesta(H) : libre(H) & H >= 0 & H <= 23 <- .send(organizador, tell, respuesta(H, H)).
 +propuesta(H) : not libre(H) <- !buscar_siguiente(H, H + 1). // Buscamos la siguiente hora si hay
     
 /*---------------------------------- Busqueda de Siguiente Hora Libre ----------------------------------*/

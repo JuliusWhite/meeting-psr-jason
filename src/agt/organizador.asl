@@ -14,6 +14,7 @@ total_participantes(3).
     -+cota_superior_global(Max);
     
     .print("-> ORGANIZANDO REUNION. Por favor, dadme vuestras cotas superiores y inferiores de horas libres respecto a este rango [", Min, " - ", Max, "]");
+    +fase_puede_iniciar;
     .broadcast(tell, rango_reunion(Min, Max)).
 
 /*  La creencia existe pero es erróneo.
@@ -50,22 +51,23 @@ total_participantes(3).
     ?cota_superior_global(ActualMax);
     if (CotaMax < ActualMax) { -+cota_superior_global(CotaMax); };
 
-    !verificar_inicio.
+    !verificar_si_inicio.
 
-+!verificar_inicio : not fase_propuestas <-
+@verificar_plan[atomic] // Atómico para que no se generen varios objetivos y escriba por pantalla varias veces el contenido
++!verificar_si_inicio : fase_puede_iniciar <-
     .count(voto_recibido(_), Recibidas);
     ?total_participantes(Total);
     
     if (Recibidas == Total) { // si ya han llegado todas las cotas de todos los agentes, empezamos con el PSR 
-        +fase_propuestas; /* Cambiamos de estado, para que no nos afecte envíos posteriores de cotas_PSR(_,_)
-                                 ni duplicaciones de este mismo objetivo*/
+        -fase_puede_iniciar; /* Cambiamos de estado, para que no nos pase duplicaciones de este mismo objetivo*/
 
         ?cota_inferior_global(Inicio);
         ?cota_superior_global(Fin);
         .print("Todas las cotas recibidas. Rango final optimizado: [", Inicio, " - ", Fin, "]");
         !proponer_hora(Inicio);
     }.
-+!verificar_inicio.
+    
++!verificar_si_inicio.
                                            
 /*------------------------------------------ Propuesta de una hora ------------------------------------------*/
 +!proponer_hora(H) : cota_superior_global(MaxG) & H > MaxG <- //Caso H es erronea
@@ -79,7 +81,7 @@ total_participantes(3).
     .broadcast(tell, propuesta(H)).
 
 /*---------------------------------------- Recepción de respuestas ------------------------------------------*/
-@recepcion_respuestas[atomic] // Si no se pone, genera condición de carrera
+@recepcion_respuestas[atomic]
 +respuesta(H, _) : not evaluando(H) <-
         ?total_participantes(Total);
         
@@ -99,7 +101,7 @@ total_participantes(3).
     if (Aceptados == Total) {
         .print("FIN: Ha sido posible poner una hora libre para todos. Será a las ", H, ":00. ¡Suerte en la reunión!");
         .broadcast(tell, reunion_fijada(H));
-        -fase_propuestas;
+        
     } else {
         -+salto_maximo(H);
         
@@ -120,8 +122,7 @@ total_participantes(3).
         ?salto_maximo(NuevaHora);
         
         if (NuevaHora == imposible) { 
-            .print("FIN: No es posible que se reunan. No hay hora en la que todos los agentes tengan la misma hora libre este día. Lo sentimos.");
-            -fase_propuestas;
+            .print("FIN: No es posible que se reunan. No hay hora en la que todos los agentes tengan la misma hora libre este día. Lo sentimos.");  
         } else {
             .print("Saltando a las ", NuevaHora, ":00h.");
             !proponer_hora(NuevaHora);
