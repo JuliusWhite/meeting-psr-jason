@@ -40,19 +40,19 @@
 
 /*__________________________ Planes de reacción a las propuestas del organizador __________________________*/
 
-+propuesta(H) : libre(H) <- .send(organizador, tell, acepto(H)).
++propuesta(H) : libre(H) <- .send(organizador, tell, respuesta(H, H)).
 +propuesta(H) : not libre(H) <- !buscar_siguiente(H, H + 1). // Buscamos la siguiente hora si hay
     
 /*---------------------------------- Busqueda de Siguiente Hora Libre ----------------------------------*/
 
 +!buscar_siguiente(Original, Actual) : libre(Actual) <- 
-    .send(organizador, tell, rechazo(Original, Actual)).
+    .send(organizador, tell, respuesta(Original, Actual)).
 
 +!buscar_siguiente(Original, Actual) : not libre(Actual) & mi_cota_superior(Max) & Actual < Max <-
     !buscar_siguiente(Original, Actual + 1).
 
 +!buscar_siguiente(Original, Actual) : mi_cota_superior(Max) & Actual >= Max <-
-    .send(organizador, tell, rechazo(Original, imposible)).
+    .send(organizador, tell, respuesta(Original, imposible)).
 
 /*____________________________________________ Reunión fijada _____________________________________________*/
 

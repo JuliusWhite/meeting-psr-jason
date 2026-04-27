@@ -13,8 +13,7 @@ total_participantes(3).
     -+cota_inferior_global(Min);
     -+cota_superior_global(Max);
     
-    .print("-> ORGANIZANDO REUNION. Por favor, dadme vuestras cotas superiores y 
-            inferiores de horas libres respecto a este rango [", Min, " - ", Max, "]");
+    .print("-> ORGANIZANDO REUNION. Por favor, dadme vuestras cotas superiores y inferiores de horas libres respecto a este rango [", Min, " - ", Max, "]");
     .broadcast(tell, rango_reunion(Min, Max)).
 
 /*  La creencia existe pero es erróneo.
@@ -28,13 +27,11 @@ total_participantes(3).
         23:00   1:00
 */
 +!iniciar_convocatoria : rango_reunion(Min, Max) & (Min < 0 | Max > 23 | Min >= Max) <-
-    .print("Error en organizador: El rango de reunión proporcionado [", Min, " , ", Max, "]
-         es inválido. Ejecución detenida.").
+    .print("Error en organizador: El rango de reunión proporcionado [", Min, " , ", Max, "] es inválido. Ejecución detenida.").
 
 // La creencia no existe
 +!iniciar_convocatoria : not rango_reunion(_, _) <-
-    .print("Error en organizador: No se encontró la creencia 'rango_reunion' en el mas2j.
-         Ejecución detenida.").
+    .print("Error en organizador: No se encontró la creencia 'rango_reunion' en el mas2j. Ejecución detenida.").
 
 
 /*________________________________________________ Solución al PSR ________________________________________________*/
@@ -77,19 +74,29 @@ total_participantes(3).
 
 +!proponer_hora(H) <-
     .print("--- Propuesta: ", H, ":00h ---");
+    .abolish(respuesta(_, _)); // limpiamos aceptos y rechazos anteriores
+    .abolish(evaluando(_));
+    .broadcast(tell, propuesta(H)).
 
-    .abolish(acepto(_)); //limpio aceptos y rechazos anteriores
-    .abolish(rechazo(_, _));
-
-    .broadcast(tell, propuesta(H));
-
-    .wait(1000);
-    !evaluar_respuestas(H).
+/*---------------------------------------- Recepción de respuestas ------------------------------------------*/
+@recepcion_respuestas[atomic] // Si no se pone, genera condición de carrera
++respuesta(H, _) <-
+    if (not evaluando(H)) { 
+        ?total_participantes(Total);
+        
+        // Contamos todas las respuestas recibidas para la hora propuesta (H)
+        .count(respuesta(H, _)[source(_)], Recibidas);
+        
+        if (Recibidas == Total) {
+            +evaluando(H);
+            !evaluar_respuestas(H);
+        }
+    }.
 
 /*------------------------------- Evaluación de Respuestas a a la Propuesta ---------------------------------*/
 +!evaluar_respuestas(H) <-
     ?total_participantes(Total);
-    .count(acepto(H)[source(_)], Aceptados);
+    .count(respuesta(H, H)[source(_)], Aceptados);
     
     if (Aceptados == Total) {
         .print("FIN: Ha sido posible poner una hora libre para todos. Será a las ", H, ":00. ¡Suerte en la reunión!");
@@ -99,7 +106,7 @@ total_participantes(3).
         -+salto_maximo(H);
         
         // Buscamos el salto más lejano iterando las creencias de rechazo
-        for (rechazo(H, ProximaLibre)) {
+        for (respuesta(H, ProximaLibre)) {
             if (ProximaLibre == imposible) {
                 -+salto_maximo(imposible); /* Si alguien dice imposible, abortamos directamente, porque no hay hora
                                                  en la que estean los 3 libres */
