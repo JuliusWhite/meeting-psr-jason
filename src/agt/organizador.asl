@@ -109,7 +109,6 @@ total_participantes(3).
         for (respuesta(H, ProximaLibre)) {
                 ?salto_maximo(Actual);
                 
-                // Solo comparamos el salto si no estamos ya en modo cancelación (imposible)
                 if (ProximaLibre > Actual) { 
                     -+salto_maximo(ProximaLibre); 
                 }

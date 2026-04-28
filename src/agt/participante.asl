@@ -40,15 +40,15 @@
 
 /*__________________________ Planes de reacción a las propuestas del organizador __________________________*/
 
-+propuesta(H) <- !buscar_siguiente(H, H). // Buscamos la siguiente hora si hay
++propuesta(H) <- !buscar_hora(H, H).
     
 /*---------------------------------- Busqueda de Siguiente Hora Libre ----------------------------------*/
 
-+!buscar_siguiente(Original, Actual) : libre(Actual)[source(self)] <- 
++!buscar_hora(Original, Actual) : libre(Actual)[source(self)] <- 
     .send(organizador, tell, respuesta(Original, Actual)).
 
-+!buscar_siguiente(Original, Actual) : not libre(Actual)[source(self)] & mi_cota_inferior(Min) & mi_cota_superior(Max) & Actual > Min & Actual < Max  <-
-    !buscar_siguiente(Original, Actual + 1).
++!buscar_hora(Original, Actual) : not libre(Actual)[source(self)] & mi_cota_inferior(Min) & mi_cota_superior(Max) & Actual > Min & Actual < Max  <-
+    !buscar_hora(Original, Actual + 1).
 
 /*____________________________________________ Reunión fijada _____________________________________________*/
 
