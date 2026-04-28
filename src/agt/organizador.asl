@@ -8,7 +8,7 @@ total_participantes(3).
 /*_______________________________ Planes de Inicialización y Validación rango_reunion _______________________________*/
 
 // La creencia existe y es válida
-+!iniciar_convocatoria : rango_reunion(Min, Max) & Min >= 0 & Min < Max <-
++!iniciar_convocatoria : rango_reunion(Min, Max) & Min >= 0 & Max <= 23 & Min < Max <-
     // Guardamos las cotas
     -+cota_inferior_global(Min);
     -+cota_superior_global(Max);
@@ -38,7 +38,7 @@ total_participantes(3).
 /*________________________________________________ Solución al PSR ________________________________________________*/
 
 /*----------------------- Conseguir Cotas superiores e inferiores de todos los agentes -----------------------*/
-+cotas_PSR(CotaMin, CotaMax)[source(Ag)] <-
++cotas_PSR(CotaMin, CotaMax)[source(Ag)] : not voto_recibido(Ag) <-
     +voto_recibido(Ag);
     
     /* Ajusta la cota inferior si un agente está libre más tarde que los demás.
@@ -107,24 +107,16 @@ total_participantes(3).
         
         // Buscamos el salto más lejano iterando las creencias de rechazo
         for (respuesta(H, ProximaLibre)) {
-            if (ProximaLibre == imposible) {
-                -+salto_maximo(imposible); /* Si alguien dice imposible, abortamos directamente, porque no hay hora
-                                                 en la que estean los 3 libres */
-            } else {
                 ?salto_maximo(Actual);
+                
                 // Solo comparamos el salto si no estamos ya en modo cancelación (imposible)
-                if (Actual \== imposible & ProximaLibre > Actual) { 
+                if (ProximaLibre > Actual) { 
                     -+salto_maximo(ProximaLibre); 
                 }
-            }
         };
         
         ?salto_maximo(NuevaHora);
         
-        if (NuevaHora == imposible) { 
-            .print("FIN: No es posible que se reunan. No hay hora en la que todos los agentes tengan la misma hora libre este día. Lo sentimos.");  
-        } else {
-            .print("Saltando a las ", NuevaHora, ":00h.");
-            !proponer_hora(NuevaHora);
-        }
+        .print("Saltando a las ", NuevaHora, ":00h.");
+        !proponer_hora(NuevaHora);
     }.

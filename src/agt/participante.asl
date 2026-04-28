@@ -26,10 +26,10 @@
     //Buscamos las cotas
     for ( libre(H) ) {
         ?mi_cota_inferior(ActualMin);
-        if (H < ActualMin) { -+mi_cota_inferior(H); };
+        if (H > ActualMin) { -+mi_cota_inferior(H); };
         
         ?mi_cota_superior(ActualMax);
-        if (H > ActualMax) { -+mi_cota_superior(H); };
+        if (H < ActualMax) { -+mi_cota_superior(H); };
     };
     
     ?mi_cota_inferior(MiMin);
@@ -40,19 +40,15 @@
 
 /*__________________________ Planes de reacción a las propuestas del organizador __________________________*/
 
-+propuesta(H) : libre(H) & H >= 0 & H <= 23 <- .send(organizador, tell, respuesta(H, H)).
-+propuesta(H) : not libre(H) <- !buscar_siguiente(H, H + 1). // Buscamos la siguiente hora si hay
++propuesta(H) <- !buscar_siguiente(H, H). // Buscamos la siguiente hora si hay
     
 /*---------------------------------- Busqueda de Siguiente Hora Libre ----------------------------------*/
 
-+!buscar_siguiente(Original, Actual) : libre(Actual) <- 
++!buscar_siguiente(Original, Actual) : libre(Actual)[source(self)] <- 
     .send(organizador, tell, respuesta(Original, Actual)).
 
-+!buscar_siguiente(Original, Actual) : not libre(Actual) & mi_cota_superior(Max) & Actual < Max <-
++!buscar_siguiente(Original, Actual) : not libre(Actual)[source(self)] & mi_cota_inferior(Min) & mi_cota_superior(Max) & Actual > Min & Actual < Max  <-
     !buscar_siguiente(Original, Actual + 1).
-
-+!buscar_siguiente(Original, Actual) : mi_cota_superior(Max) & Actual >= Max <-
-    .send(organizador, tell, respuesta(Original, imposible)).
 
 /*____________________________________________ Reunión fijada _____________________________________________*/
 
