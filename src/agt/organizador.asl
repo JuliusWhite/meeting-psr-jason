@@ -11,7 +11,7 @@ total_participantes(3).
 
 
 // La creencia existe y es válida
-+!iniciar_convocatoria : rango_reunion(Min, Max) & Min >= 0 & Max <= 23 & Min < Max <-
++!iniciar_convocatoria : rango_reunion(Min, Max) & (Min >= 0 & Max <= 23 & Min < Max) <-
    // Guardamos las cotas
    -+cota_inferior_global(Min);
    -+cota_superior_global(Max);
@@ -83,16 +83,23 @@ total_participantes(3).
 +!verificar_si_inicio.
                                          
 /*------------------------------------------ Propuesta de una hora ------------------------------------------*/
-+!proponer_hora(H) : cota_inferior_global(MinG)[source(self)] | cota_superior_global(MaxG)[source(self)] | H < MinG | H > MaxG <-
++!proponer_hora(H) : not cota_inferior_global(_) | not cota_superior_global(_) <-
     //Para la Consistencia de Nodo, revisamos que una de ellas falle para que exista
-    .print("FIN: No es posible que se reunan.");
-   -fase_propuestas.
+    !no_es_posible_PSR.
 
++!proponer_hora(H) : (cota_inferior_global(Min) & H < Min) | (cota_superior_global(Max) & H > Max) <-
+   //Para la Consistencia de Nodo, revisamos si está dentro de la Cota inferior/superior global
+   !no_es_posible_PSR.
+    
+    
++!no_es_posible_PSR <-
+   .print("FIN: No es posible que se reunan.");
+   -fase_propuestas.
 
 +!proponer_hora(H) <-
    .print("--- Propuesta: ", H, ":00h ---");
    .abolish(respuesta(_, _)); // limpiamos aceptos y rechazos anteriores
-   .abolish(evaluando(_)[source(self)]);
+   .abolish(evaluando(_));
    .broadcast(tell, propuesta(H)).
 
 
@@ -121,18 +128,24 @@ total_participantes(3).
       
    } else {
        -+salto_maximo(H);
-      
-       // Buscamos el salto más lejano iterando las creencias de rechazo
-       for (respuesta(H, ProximaLibre)) {
+
+       if (respuesta(H, -1)[source(_)]) { // Entra dentro si el agente X sobrepasa su cota máxima particula porque en la hora que se propone ya no tiene horas libres más
+           .print("FIN: No es posible que se reunan. Alguien se ha quedado sin horas libres ese día.");
+           -fase_propuestas;
+           
+       } else {
+           -+salto_maximo(H);
+          
+           for (respuesta(H, ProximaLibre)[source(_)]) {
                ?salto_maximo(Actual);
               
                if (ProximaLibre > Actual) {
                    -+salto_maximo(ProximaLibre);
                }
-       };
-      
-       ?salto_maximo(NuevaHora);
-      
-       .print("Saltando a las ", NuevaHora, ":00h.");
-       !proponer_hora(NuevaHora);
+           };
+          
+           ?salto_maximo(NuevaHora);
+           .print("Saltando a las ", NuevaHora, ":00h.");
+           !proponer_hora(NuevaHora);
+       }
    }.

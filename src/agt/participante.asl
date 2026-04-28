@@ -1,7 +1,4 @@
 /* Planes */
-/* Procesamiento de horas libres de lista a creencias */
-+horas_libres(Lista) <- !descomponer_lista(Lista).
-
 
 /*___________________________ Procesamiento de horas libres de lista a creencias ___________________________*/
 
@@ -13,7 +10,7 @@
 /*--------------------- pudiendo estar la lista desordenada. --------------------------------------------*/
 
 
-+!descomponer_lista([]).
++!descomponer_lista([]) <- +conversion_hecha.
 +!descomponer_lista([H|Resto]) <-
    +libre(H);               
    !descomponer_lista(Resto).
@@ -21,8 +18,8 @@
 
 /*__________________________________________ Cotas Rango Reunion __________________________________________*/
 
-
-+rango_reunion(MinG, MaxG) : horas_libres(Lista) <-
++rango_reunion(MinG, MaxG) <- !intentar_calcular_cotas(MinG, MaxG).
++!intentar_calcular_cotas(MinG, MaxG) : horas_libres(_) & conversion_hecha <-
   
    /* Como la lista puede estar desordenada, inicializamos variables temporales
        con valores extremos para buscar nuestro mínimo y máximo iterando. */
@@ -31,11 +28,14 @@
   
    //Buscamos las cotas
    for ( libre(H)[source(self)] ) {
-       ?mi_cota_inferior(ActualMin);
-       if (H < ActualMin) { -+mi_cota_inferior(H); }; /* Para consistencia de Cotas */
-      
-       ?mi_cota_superior(ActualMax);
-       if (H > ActualMax) { -+mi_cota_superior(H); }; /* Para consistencia de Cotas */
+        if(H >= MinG & H <= MaxG){
+            ?mi_cota_inferior(ActualMin);
+            if (H < ActualMin) { -+mi_cota_inferior(H); }; /* Para consistencia de Cotas */
+            
+            ?mi_cota_superior(ActualMax);
+            if (H > ActualMax) { -+mi_cota_superior(H); }; /* Para consistencia de Cotas */
+        };
+       
    };
   
    ?mi_cota_inferior(MiMin);
@@ -43,6 +43,10 @@
   
    .print("Mi agenda procesada abarca el rango: [", MiMin, " - ", MiMax, "]");
    .send(organizador, tell, cotas_PSR(MiMin, MiMax)).
+
++!intentar_calcular_cotas(MinG, MaxG) : not conversion_hecha <-
+   .wait(50);
+   !intentar_calcular_cotas(MinG, MaxG).
 
 
 /*__________________________ Planes de reacción a las propuestas del organizador __________________________*/
@@ -52,14 +56,14 @@
   
 /*---------------------------------- Busqueda de Siguiente Hora Libre ----------------------------------*/
 
-
 +!buscar_hora(Original, Actual) : libre(Actual)[source(self)] <-
-   .send(organizador, tell, respuesta(Original, Actual)).
+    .send(organizador, tell, respuesta(Original, Actual)).
 
++!buscar_hora(Original, Actual) : mi_cota_superior(Max)[source(self)] & Actual < Max & 
+                                    not libre(Actual)[source(self)]  <- !buscar_hora(Original, Actual + 1).
 
-+!buscar_hora(Original, Actual) : not libre(Actual)[source(self)] & mi_cota_inferior(Min) & mi_cota_superior(Max)
-                                    & Actual > Min & Actual < Max <-
-    !buscar_hora(Original, Actual + 1).
++!buscar_hora(Original, Actual) : mi_cota_superior(Max)[source(self)] & Actual >= Max 
+                                    <- .send(organizador, tell, respuesta(Original, -1)).
 
 /*____________________________________________ Reunión fijada _____________________________________________*/
 
