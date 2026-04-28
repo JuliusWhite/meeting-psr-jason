@@ -1,28 +1,36 @@
 /*
-    reunion_psr
-    ---------------------------
+   reunion_psr
+   ---------------------------
 
-    Jason Application File
 
-    This file defines the initial state of the MAS
+   Jason Application File
 
-    Jason 3.3.0
-    abril 22, 2026 - 18:08:48
+
+   This file defines the initial state of the MAS
+
+
+   Jason 3.3.0
+   abril 22, 2026 - 18:08:48
 */
+
 
 MAS reunion_psr {
 
-    infrastructure: Centralised
 
-    agents:
-        // El organizador que gestiona el proceso de búsqueda
-        organizador [beliefs="rango_reunion(10, 16)"];
+   infrastructure: Centralised
 
-        // Los tres participantes con sus respectivas agendas
-        agente1 participante [beliefs="horas_libres([9, 10, 11, 15])"];
-        agente2 participante [beliefs="horas_libres([8, 12, 13, 15, 16])"];
-        agente3 participante [beliefs="horas_libres([8, 14, 15, 16])"];
 
-    aslSourcePath: "src/agt";
-    
+   agents:
+       // El organizador que gestiona el proceso de búsqueda
+       organizador [beliefs="rango_reunion(10, 16)"];
+
+
+       // Los tres participantes con sus respectivas agendas
+       agente1 participante [beliefs="horas_libres([9, 10, 11, 15])"];
+       agente2 participante [beliefs="horas_libres([8, 12, 13, 15, 16])"];
+       agente3 participante [beliefs="horas_libres([8, 14, 15, 16])"];
+
+
+   aslSourcePath: "src/agt";
+  
 }
