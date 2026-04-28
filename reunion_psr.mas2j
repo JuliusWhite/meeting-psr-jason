@@ -19,7 +19,7 @@ MAS reunion_psr {
         organizador [beliefs="rango_reunion(10, 16)"];
 
         // Los tres participantes con sus respectivas agendas
-        agente1 participante [beliefs="horas_libres([9, 10, 11, 15, 16])"];
+        agente1 participante [beliefs="horas_libres([9, 10, 11, 15])"];
         agente2 participante [beliefs="horas_libres([8, 12, 13, 15, 16])"];
         agente3 participante [beliefs="horas_libres([8, 14, 15, 16])"];
 

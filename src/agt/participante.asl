@@ -24,12 +24,12 @@
     -+mi_cota_superior(-1);
     
     //Buscamos las cotas
-    for ( libre(H) ) {
+    for ( libre(H)[source(self)] ) {
         ?mi_cota_inferior(ActualMin);
-        if (H > ActualMin) { -+mi_cota_inferior(H); };
+        if (H < ActualMin) { -+mi_cota_inferior(H); };
         
         ?mi_cota_superior(ActualMax);
-        if (H < ActualMax) { -+mi_cota_superior(H); };
+        if (H > ActualMax) { -+mi_cota_superior(H); };
     };
     
     ?mi_cota_inferior(MiMin);
